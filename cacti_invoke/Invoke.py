@@ -116,7 +116,7 @@ class Invoke:
         if self.cfg_dir is not None:
             _mkdir_p(self.cfg_dir)
             cfg_fname = os.path.join(self.cfg_dir, name + '.cfg')
-            Config.generate_cfg(config, name + '.cfg')
+            Config.generate_cfg(config, cfg_fname)
         else:
             with tempfile.NamedTemporaryFile(suffix='.cfg', delete=False) \
                     as tempfh:
