@@ -126,8 +126,9 @@ class Invoke:
         # run.
         try:
             with open(os.devnull, 'w') as fnull:
-                outstr = subprocess.check_output([self.cacti_exe,
-                    '-infile', cfg_fname], stderr=fnull, cwd=tempfile.tempdir)
+                outstr = subprocess.check_output(
+                        [self.cacti_exe, '-infile', cfg_fname],
+                        stderr=fnull, cwd=tempfile.gettempdir())
         except subprocess.CalledProcessError as e:
             raise RuntimeError('CACTI exits with {}'.format(e.returncode))
 
