@@ -12,8 +12,8 @@ import json
 import errno
 from collections import OrderedDict
 
-import Config
-import ResultParser
+from cacti_invoke import Config
+from cacti_invoke import ResultParser
 
 
 # http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -27,7 +27,10 @@ def _mkdir_p(path):
             raise
 
 
-class Invoke:
+class Invoke(object):
+    '''
+    Environment class to invoke CACTI.
+    '''
 
     def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_exe=None):
         '''
@@ -49,7 +52,7 @@ class Invoke:
                 cacti_exe = os.path.join(os.environ.get('CACTIPATH'), 'cacti')
             except KeyError as e:
                 sys.stderr.write('CACTI path is not provided and cannot find '
-                        'env var CACTIPATH.\n')
+                                 'env var CACTIPATH.\n')
                 sys.stderr.flush()
                 raise e
 
@@ -63,7 +66,7 @@ class Invoke:
 
     @staticmethod
     def _cfg_name_str(size, assoc, line, banks, tech, temp, level, memtype,
-            rwports, rdports, wrports, dcell, dperi, tcell, tperi):
+                      rwports, rdports, wrports, dcell, dperi, tcell, tperi):
         return 's{}_w{}_l{}_b{}_t{}_{}k_{}_{}_rw{}_rd{}_wr{}_{}_{}_{}_{}'\
                 .format(size, assoc, line, banks, tech, temp, level, memtype,
                         rwports, rdports, wrports, dcell, dperi, tcell, tperi)
@@ -84,8 +87,11 @@ class Invoke:
 
 
     def invoke(self, size, assoc, line, banks=1, tech=0.032, temp=350,
-            level='L1', memtype='cache', rwports=0, rdports=1, wrports=1,
-            dcell='hp', dperi='hp', tcell='hp', tperi='hp'):
+               level='L1', memtype='cache', rwports=0, rdports=1, wrports=1,
+               dcell='hp', dperi='hp', tcell='hp', tperi='hp'):
+        '''
+        Invoke CACTI for the specific configuration.
+        '''
 
         dcell = Invoke._format_array_type(dcell)
         dperi = Invoke._format_array_type(dperi)
@@ -110,7 +116,8 @@ class Invoke:
         config['tperi'] = tperi
 
         name = Invoke._cfg_name_str(size, assoc, line, banks, tech, temp, level,
-                memtype, rwports, rdports, wrports, dcell, dperi, tcell, tperi)
+                                    memtype, rwports, rdports, wrports,
+                                    dcell, dperi, tcell, tperi)
 
         # create cfg file.
         if self.cfg_dir is not None:
@@ -126,7 +133,7 @@ class Invoke:
         # run.
         try:
             with open(os.devnull, 'w') as fnull:
-                outstr = subprocess.check_output(
+                outstr = subprocess.check_output( \
                         [self.cacti_exe, '-infile', cfg_fname],
                         stderr=fnull, cwd=tempfile.gettempdir())
         except subprocess.CalledProcessError as e:
@@ -157,4 +164,18 @@ class Invoke:
             fh.write('\n')
 
         return config
+
+
+    def get_cacti_exe(self):
+        '''
+        Path to CACTI executable.
+        '''
+        return self.cacti_exe
+
+
+    def get_output_dir(self):
+        '''
+        Output directory.
+        '''
+        return self.output_dir
 
