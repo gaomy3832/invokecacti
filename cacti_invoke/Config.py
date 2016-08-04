@@ -58,7 +58,9 @@ def generate_cfg(cfgDict, filename=None):
             WRPORT=cfgDict['wrports'], DARRAY_CELL_TYPE=cfgDict['dcell'],
             DARRAY_PERI_TYPE=cfgDict['dperi'],
             TARRAY_CELL_TYPE=cfgDict['tcell'],
-            TARRAY_PERI_TYPE=cfgDict['tperi'])
+            TARRAY_PERI_TYPE=cfgDict['tperi'],
+            # dependent vars
+            IOWIDTH=8*cfgDict['line'])
 
     if filename is not None:
         with open(filename, 'w') as fh:

@@ -91,7 +91,7 @@
 -Long channel devices - "true"
 
 # Bus width include data bits and address bits required by the decoder
--output/input bus width 256
+-output/input bus width $IOWIDTH
 //-output/input bus width 16
 //-output/input bus width 512
 
