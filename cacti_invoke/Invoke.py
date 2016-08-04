@@ -40,9 +40,9 @@ class Invoke:
         env var `CACTIPATH`.
         '''
 
-        self.output_dir = output_dir
-        self.cfg_dir = cfg_dir
-        self.log_dir = log_dir
+        self.output_dir = os.path.abspath(output_dir)
+        self.cfg_dir = os.path.abspath(cfg_dir) if cfg_dir is not None else None
+        self.log_dir = os.path.abspath(log_dir) if log_dir is not None else None
 
         if cacti_exe is None:
             try:
@@ -58,7 +58,7 @@ class Invoke:
             sys.stderr.flush()
             raise ValueError(cacti_exe)
 
-        self.cacti_exe = cacti_exe
+        self.cacti_exe = os.path.abspath(cacti_exe)
 
 
     @staticmethod
@@ -126,8 +126,8 @@ class Invoke:
         # run.
         try:
             with open(os.devnull, 'w') as fnull:
-                outstr = subprocess.check_output(
-                        [self.cacti_exe, '-infile', cfg_fname], stderr=fnull)
+                outstr = subprocess.check_output([self.cacti_exe,
+                    '-infile', cfg_fname], stderr=fnull, cwd=tempfile.tempdir)
         except subprocess.CalledProcessError as e:
             raise RuntimeError('CACTI exits with {}'.format(e.returncode))
 
