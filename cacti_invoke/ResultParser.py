@@ -27,7 +27,7 @@ _RESULT_KEY2PATTERN = OrderedDict([
             lambda x: float(x) * 1e-9)),
     ('leakage', (r'Total leakage power of a bank .* \(mW\)\s*:\s*({})'\
             .format(FLOAT_REGEX), \
-            lambda x: float(x) * 1e-9)),
+            lambda x: float(x) * 1e-3)),
     ('height', (r'Cache height x width \(mm\)\s*:\s*({0})\s*x\s*{0}'\
             .format(FLOAT_REGEX), \
             lambda x: float(x) * 1e-3)),
