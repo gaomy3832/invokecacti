@@ -12,8 +12,8 @@ import json
 import errno
 from collections import OrderedDict
 
-from cacti_invoke import Config
-from cacti_invoke import ResultParser
+from . import Config
+from . import ResultParser
 
 
 # http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python

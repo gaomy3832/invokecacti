@@ -4,9 +4,9 @@
  *
 """
 
-from cacti_invoke.Invoke import Invoke
-import cacti_invoke.Config
-import cacti_invoke.ResultParser
+from . import Config
+from . import ResultParser
+from .Invoke import Invoke
 
 __version__ = '0.1.0'
 
