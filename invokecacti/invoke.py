@@ -12,8 +12,8 @@ import json
 import errno
 from collections import OrderedDict
 
-from . import Config
-from . import ResultParser
+from . import config
+from . import result_parser
 
 
 # http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -98,22 +98,22 @@ class Invoke(object):
         tcell = Invoke._format_array_type(tcell)
         tperi = Invoke._format_array_type(tperi)
 
-        config = OrderedDict()
-        config['size'] = size
-        config['assoc'] = assoc
-        config['line'] = line
-        config['banks'] = banks
-        config['tech'] = tech
-        config['temp'] = temp
-        config['level'] = level
-        config['type'] = memtype
-        config['rwports'] = rwports
-        config['rdports'] = rdports
-        config['wrports'] = wrports
-        config['dcell'] = dcell
-        config['dperi'] = dperi
-        config['tcell'] = tcell
-        config['tperi'] = tperi
+        cfg = OrderedDict()
+        cfg['size'] = size
+        cfg['assoc'] = assoc
+        cfg['line'] = line
+        cfg['banks'] = banks
+        cfg['tech'] = tech
+        cfg['temp'] = temp
+        cfg['level'] = level
+        cfg['type'] = memtype
+        cfg['rwports'] = rwports
+        cfg['rdports'] = rdports
+        cfg['wrports'] = wrports
+        cfg['dcell'] = dcell
+        cfg['dperi'] = dperi
+        cfg['tcell'] = tcell
+        cfg['tperi'] = tperi
 
         name = Invoke._cfg_name_str(size, assoc, line, banks, tech, temp, level,
                                     memtype, rwports, rdports, wrports,
@@ -123,11 +123,11 @@ class Invoke(object):
         if self.cfg_dir is not None:
             _mkdir_p(self.cfg_dir)
             cfg_fname = os.path.join(self.cfg_dir, name + '.cfg')
-            Config.generate_cfg(config, cfg_fname)
+            config.generate_cfg(cfg, cfg_fname)
         else:
             with tempfile.NamedTemporaryFile(suffix='.cfg', delete=False) \
                     as tempfh:
-                tempfh.write(Config.generate_cfg(config))
+                tempfh.write(config.generate_cfg(cfg))
                 cfg_fname = tempfh.name
 
         # run.
@@ -151,19 +151,19 @@ class Invoke(object):
                 fh.write(outstr)
 
         # parse output.
-        results = ResultParser.parse(outstr)
+        results = result_parser.parse(outstr)
         # update() loses order.
         for key, val in results.items():
-            config[key] = val
+            cfg[key] = val
 
         # write output json file.
         _mkdir_p(self.output_dir)
         json_fname = os.path.join(self.output_dir, name + '.json')
         with open(json_fname, 'w') as fh:
-            json.dump(config, fh, indent=2)
+            json.dump(cfg, fh, indent=2)
             fh.write('\n')
 
-        return config
+        return cfg
 
 
     def get_cacti_exe(self):
