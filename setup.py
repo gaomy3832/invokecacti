@@ -12,7 +12,7 @@ import setuptools
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-package = 'cacti_invoke'
+package = 'invokecacti'
 version = '0.0.0'
 desc = 'CACTI invoke tool.'
 

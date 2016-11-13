@@ -7,11 +7,11 @@
 from collections import OrderedDict
 import json
 
-import cacti_invoke
+import invokecacti
 
 cacti_exe='/armadillo/users/mgao12/research/tools/mcpat/mcpat10/cacti/cacti'
 
-cacti = cacti_invoke.Invoke('output',
+cacti = invokecacti.Invoke('output',
         cfg_dir='output/cfgs', log_dir='output/logs', cacti_exe=cacti_exe)
 
 cfgs = OrderedDict()
