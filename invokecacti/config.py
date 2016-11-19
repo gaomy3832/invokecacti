@@ -9,66 +9,105 @@ from string import Template
 
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_CFG_TMPL_DIR = os.path.join(_THIS_DIR, 'cfg_templates')
 
 
-def generate_cfg(cfg_dict, filename=None):
-    '''
-    Generate the cfg file for CACTI.
+class Config(object):
+    ''' CACTI configuration. '''
 
-    Return the cfg file content. If `filename` is not None, also create the cfg
-    file.
-    '''
+    base_config_keys = [
+        'SIZE', 'LINE', 'BANKS', 'TECHNODE', 'TEMP', 'TYPE',
+        'DARRAY_CELL_TYPE', 'DARRAY_PERI_TYPE',
+        'TARRAY_CELL_TYPE', 'TARRAY_PERI_TYPE'
+        ]
 
-    # load template file.
+    def __init__(self, param_dict):
+        if not isinstance(param_dict, dict):
+            raise TypeError('{}: param_dict has invalid type.'
+                            .format(self.__class__.__name__))
+        for key in self.base_config_keys:
+            if key not in param_dict:
+                raise KeyError('{}: key {} is not provided.'
+                               .format(self.__class__.__name__, key))
+        self.param_dict = param_dict
 
-    tmplfilename = os.path.join(_THIS_DIR,
-                                'cfg_templates',
-                                'cacti-p.cfg.template')
-    if not os.path.isfile(tmplfilename):
-        raise IOError(tmplfilename)
+    def version_name(self):
+        '''
+        Return the corresponding CACTI version name.
+        '''
+        raise NotImplementedError('{}: version_name() not implemented.'
+                                  .format(self.__class__.__name__))
 
-    with open(tmplfilename, 'r') as tfile:
-        tmpl = Template(tfile.read())
+    def config_keys(self):
+        '''
+        Return all configuration key names as a list.
+        '''
+        raise NotImplementedError('{}: version_name() not implemented.'
+                                  .format(self.__class__.__name__))
 
-    # check config dict.
+    def generate(self, filename=None):
+        '''
+        Generate the cfg file for CACTI.
 
-    for key in ['size', 'assoc', 'line', 'banks', 'tech', 'temp', 'level',
-                'type', 'rwports', 'rdports', 'wrports',
-                'dcell', 'dperi', 'tcell', 'tperi']:
-        if key not in cfg_dict:
-            raise KeyError(key)
+        Return the cfg file content. If `filename` is not None, also create the
+        cfg file.
+        '''
 
-    memtype = cfg_dict['type']
-    if memtype != 'cache' and memtype != 'ram' and memtype != 'cam' \
-            and memtype != 'main memory':
-        raise ValueError(memtype)
+        # load template file.
 
-    for key in ['dcell', 'dperi', 'tcell', 'tperi']:
-        array_type = cfg_dict[key]
-        if array_type != 'itrs-hp' and array_type != 'itrs-lstp' \
-                and array_type != 'itrs-lop' and array_type != 'lp-dram' \
-                and array_type != 'comm-dram':
-            raise ValueError(array_type)
+        tmplfilename = os.path.join(_CFG_TMPL_DIR,
+                                    '{}.cfg.template'
+                                    .format(self.version_name().lower()))
+        if not os.path.isfile(tmplfilename):
+            raise IOError('{}: template {} does not exist.'
+                          .format(self.__class__.__name__, tmplfilename))
+        with open(tmplfilename, 'r') as tfile:
+            tmpl = Template(tfile.read())
 
-    # fill template.
+        # check config param dict.
 
-    content = tmpl.substitute(SIZE=cfg_dict['size'], WAYS=cfg_dict['assoc'],
-                              BANKS=cfg_dict['banks'], LINE=cfg_dict['line'],
-                              TECHNODE=cfg_dict['tech'], TEMP=cfg_dict['temp'],
-                              LEVEL=cfg_dict['level'], TYPE=cfg_dict['type'],
-                              RWPORT=cfg_dict['rwports'],
-                              RDPORT=cfg_dict['rdports'],
-                              WRPORT=cfg_dict['wrports'],
-                              DARRAY_CELL_TYPE=cfg_dict['dcell'],
-                              DARRAY_PERI_TYPE=cfg_dict['dperi'],
-                              TARRAY_CELL_TYPE=cfg_dict['tcell'],
-                              TARRAY_PERI_TYPE=cfg_dict['tperi'],
-                              # dependent vars
-                              IOWIDTH=8*cfg_dict['line'])
+        for key in self.config_keys():
+            if key not in self.param_dict:
+                raise KeyError('{}: key {} is not provided.'
+                               .format(self.__class__.__name__, key))
 
-    if filename is not None:
-        with open(filename, 'w') as fh:
-            fh.write(content)
+        type_ = self.param_dict['TYPE']
+        if type_ != 'cache' and type_ != 'ram' and type_ != 'cam' \
+                and type_ != 'main memory':
+            raise ValueError('{}: TYPE has invalid value {}.'
+                             .format(self.__class__.__name__, type_))
 
-    return content
+        for key in ['DARRAY_CELL_TYPE', 'DARRAY_PERI_TYPE',
+                    'TARRAY_CELL_TYPE', 'TARRAY_PERI_TYPE']:
+            array_type = self.param_dict[key]
+            if array_type != 'itrs-hp' and array_type != 'itrs-lstp' \
+                    and array_type != 'itrs-lop' and array_type != 'lp-dram' \
+                    and array_type != 'comm-dram':
+                raise ValueError('{}: {} has invalid value {}.'
+                                 .format(self.__class__.__name__, key, array_type))
+
+        # fill template.
+
+        content = tmpl.substitute(**self.param_dict)
+
+        if filename is not None:
+            with open(filename, 'w') as fh:
+                fh.write(content)
+
+        return content
+
+
+class ConfigCACTIP(Config):
+    ''' CACTI-P configuration. '''
+
+    def __init__(self, param_dict):
+        super(ConfigCACTIP, self).__init__(param_dict)
+
+    def version_name(self):
+        return 'CACTI-P'
+
+    def config_keys(self):
+        return self.base_config_keys \
+            + ['WAYS', 'LEVEL', 'RWPORT', 'RDPORT', 'WRPORT', 'IOWIDTH']
+
 

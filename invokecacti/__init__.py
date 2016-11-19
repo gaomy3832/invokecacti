@@ -4,7 +4,7 @@
  *
 """
 
-from . import config
+from .config import ConfigCACTIP
 from . import result_parser
 from .invoke import Invoke
 
