@@ -21,7 +21,9 @@ def generate_cfg(cfg_dict, filename=None):
 
     # load template file.
 
-    tmplfilename = os.path.join(_THIS_DIR, 'cache.cfg.template')
+    tmplfilename = os.path.join(_THIS_DIR,
+                                'cfg_templates',
+                                'cacti-p.cfg.template')
     if not os.path.isfile(tmplfilename):
         raise IOError(tmplfilename)
 

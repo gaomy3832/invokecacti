@@ -25,8 +25,8 @@ _RESULT_KEY2PATTERN = OrderedDict([
     ('ewrite', (r'Total dynamic write energy per access \(nJ\)\s*:\s*({})'\
             .format(FLOAT_REGEX), \
             lambda x: float(x) * 1e-9)),
-    ('leakage', (r'Total leakage power of a bank .* \(mW\)\s*:\s*({})'\
-            .format(FLOAT_REGEX), \
+    ('leakage', (r'(?m)Total leakage power of a bank .* \(mW\)\s*:\s*({})'
+                 r'\s*Cache'.format(FLOAT_REGEX), \
             lambda x: float(x) * 1e-3)),
     ('height', (r'Cache height x width \(mm\)\s*:\s*({0})\s*x\s*{0}'\
             .format(FLOAT_REGEX), \
