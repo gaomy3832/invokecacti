@@ -9,7 +9,7 @@ import json
 
 import invokecacti
 
-cacti_exe='/armadillo/users/mgao12/research/tools/mcpat/mcpat10/cacti/cacti'
+cacti_exe='/armadillo/users/mgao12/research/tools/mcpat/mcpat/cacti/cacti'
 
 cacti = invokecacti.Invoke('output',
         cfg_dir='output/cfgs', log_dir='output/logs', cacti_exe=cacti_exe)
