@@ -123,6 +123,7 @@ class ConfigCACTIP(Config):
 
     def __init__(self, param_dict):
         super(ConfigCACTIP, self).__init__(param_dict)
+        self.param_dict['IOWIDTH'] = 8 * self.param_dict['LINE']
 
     def version_name(self):
         return 'CACTI-P'
