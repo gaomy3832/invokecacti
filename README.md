@@ -5,5 +5,7 @@ CACTI invoke
 
 Make it easier to invoke CACTI.
 
-Now compatible with CACTI-6.5++ in McPAT-1.0.
+Now compatible with:
+
+- CACTI-P in McPAT-1.3.
 
