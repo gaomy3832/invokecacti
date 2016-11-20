@@ -5,8 +5,8 @@
 """
 
 from .config import ConfigCACTIP
-from . import result_parser
-from .invoke import Invoke
+from .result_parser import ResultParserCACTIP
+from .invoke import InvokeCACTIP
 
 __version__ = '0.1.1'
 

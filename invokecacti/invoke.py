@@ -4,16 +4,15 @@
  *
 """
 
-import sys
-import os
-import tempfile
-import subprocess
-import json
 import errno
+import json
+import os
+import subprocess
 from collections import OrderedDict
+from tempfile import NamedTemporaryFile, gettempdir
 
-from .config import ConfigCACTIP
-from .result_parser import ResultParserCACTIP
+from . import config
+from . import result_parser
 
 
 # http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -43,105 +42,70 @@ class Invoke(object):
         env var `CACTIPATH`.
         '''
 
+        if cacti_exe is None:
+            try:
+                cacti_exe = os.path.join(os.environ.get('CACTIPATH'), 'cacti')
+            except KeyError:
+                raise EnvironmentError('{}: CACTI path is not provided and '
+                                       'cannot find env var CACTIPATH.'
+                                       .format(self.__class__.__name__))
+
+        if not os.path.isfile(cacti_exe) or not os.access(cacti_exe, os.X_OK):
+            raise ValueError('{}: CACTI path or envvar CACTIPATH {} is invalid.'
+                             .format(self.__class__.__name__, cacti_exe))
+        self.cacti_exe = os.path.abspath(cacti_exe)
+
         self.output_dir = os.path.abspath(output_dir)
         self.cfg_dir = os.path.abspath(cfg_dir) if cfg_dir is not None else None
         self.log_dir = os.path.abspath(log_dir) if log_dir is not None else None
 
-        if cacti_exe is None:
-            try:
-                cacti_exe = os.path.join(os.environ.get('CACTIPATH'), 'cacti')
-            except KeyError as e:
-                sys.stderr.write('CACTI path is not provided and cannot find '
-                                 'env var CACTIPATH.\n')
-                sys.stderr.flush()
-                raise e
+        self.result_parser = None
 
-        if not os.path.isfile(cacti_exe) or not os.access(cacti_exe, os.X_OK):
-            sys.stderr.write('CACTI path or env var CACTIPATH is invalid.\n')
-            sys.stderr.flush()
-            raise ValueError(cacti_exe)
+    def get_cacti_exe(self):
+        ''' Path to CACTI executable. '''
+        return self.cacti_exe
 
-        self.cacti_exe = os.path.abspath(cacti_exe)
+    def get_output_dir(self):
+        ''' Output directory. '''
+        return self.output_dir
 
+    def _make_config(self, **kwargs):
+        raise NotImplementedError('{}: _make_config() not implemented.'
+                                  .format(self.__class__.__name__))
 
-    @staticmethod
-    def _cfg_name_str(size, assoc, line, banks, tech, temp, level, memtype,
-                      rwports, rdports, wrports, dcell, dperi, tcell, tperi):
-        return 's{}_w{}_l{}_b{}_t{}_{}k_{}_{}_rw{}_rd{}_wr{}_{}_{}_{}_{}'\
-                .format(size, assoc, line, banks, tech, temp, level, memtype,
-                        rwports, rdports, wrports, dcell, dperi, tcell, tperi)
-
-
-    @staticmethod
-    def _format_array_type(array_type):
-        if array_type == 'itrs-hp' or array_type == 'itrs-lstp' \
-                or array_type == 'itrs-lop' or array_type == 'lp-dram' \
-                or array_type == 'comm-dram':
-            return array_type
-        elif array_type == 'hp' or array_type == 'lstp' or array_type == 'lop':
-            return 'itrs-' + array_type
-        elif array_type == 'dram':
-            return 'comm-dram'
-        else:
-            raise ValueError(array_type)
-
-
-    def invoke(self, size, assoc, line, banks=1, tech=0.032, temp=350,
-               level='L1', memtype='cache', rwports=0, rdports=1, wrports=1,
-               dcell='hp', dperi='hp', tcell='hp', tperi='hp'):
+    def invoke(self, **kwargs):
         '''
         Invoke CACTI for the specific configuration.
         '''
 
-        dcell = Invoke._format_array_type(dcell)
-        dperi = Invoke._format_array_type(dperi)
-        tcell = Invoke._format_array_type(tcell)
-        tperi = Invoke._format_array_type(tperi)
+        return_dict = OrderedDict()
 
-        cfg_dict = OrderedDict()
-        cfg_dict['SIZE'] = size
-        cfg_dict['WAYS'] = assoc
-        cfg_dict['LINE'] = line
-        cfg_dict['BANKS'] = banks
-        cfg_dict['TECHNODE'] = tech
-        cfg_dict['TEMP'] = temp
-        cfg_dict['LEVEL'] = level
-        cfg_dict['TYPE'] = memtype
-        cfg_dict['RWPORT'] = rwports
-        cfg_dict['RDPORT'] = rdports
-        cfg_dict['WRPORT'] = wrports
-        cfg_dict['DARRAY_CELL_TYPE'] = dcell
-        cfg_dict['DARRAY_PERI_TYPE'] = dperi
-        cfg_dict['TARRAY_CELL_TYPE'] = tcell
-        cfg_dict['TARRAY_PERI_TYPE'] = tperi
-        # dependent vars.
-        cfg_dict['IOWIDTH'] = 8 * line
+        # create config.
+        cfg = self._make_config(**kwargs)
+        name = cfg.config_name()
 
-        cfg = ConfigCACTIP(cfg_dict)
-
-        name = Invoke._cfg_name_str(size, assoc, line, banks, tech, temp, level,
-                                    memtype, rwports, rdports, wrports,
-                                    dcell, dperi, tcell, tperi)
-
-        # create cfg file.
+        # write cfg file.
+        if not isinstance(cfg, config.Config):
+            raise RuntimeError('{}: _make_config() must return a Config class.'
+                               .format(self.__class__.__name__))
         if self.cfg_dir is not None:
             _mkdir_p(self.cfg_dir)
             cfg_fname = os.path.join(self.cfg_dir, name + '.cfg')
             cfg.generate(cfg_fname)
         else:
-            with tempfile.NamedTemporaryFile(suffix='.cfg', delete=False) \
-                    as tempfh:
+            with NamedTemporaryFile(suffix='.cfg', delete=False) as tempfh:
                 tempfh.write(cfg.generate())
                 cfg_fname = tempfh.name
 
         # run.
         try:
             with open(os.devnull, 'w') as fnull:
-                outstr = subprocess.check_output( \
-                        [self.cacti_exe, '-infile', cfg_fname],
-                        stderr=fnull, cwd=tempfile.gettempdir())
+                outstr = subprocess.check_output(
+                    [self.cacti_exe, '-infile', cfg_fname],
+                    stderr=fnull, cwd=gettempdir())
         except subprocess.CalledProcessError as e:
-            raise RuntimeError('CACTI exits with {}'.format(e.returncode))
+            raise RuntimeError('{}: CACTI exits with {}'
+                               .format(self.__class__.__name__, e.returncode))
 
         # remove temporary cfg file.
         if self.cfg_dir is None:
@@ -155,31 +119,59 @@ class Invoke(object):
                 fh.write(outstr)
 
         # parse output.
-        results = ResultParserCACTIP().parse(outstr)
+        results = self.result_parser.parse(outstr)
+
+        # compose return dict.
         # update() loses order.
+        for key, val in cfg.config_dict().items():
+            return_dict[key] = val
         for key, val in results.items():
-            cfg_dict[key] = val
+            return_dict[key] = val
 
         # write output json file.
         _mkdir_p(self.output_dir)
         json_fname = os.path.join(self.output_dir, name + '.json')
         with open(json_fname, 'w') as fh:
-            json.dump(cfg_dict, fh, indent=2)
+            json.dump(return_dict, fh, indent=2)
             fh.write('\n')
 
-        return cfg_dict
+        return return_dict
 
 
-    def get_cacti_exe(self):
-        '''
-        Path to CACTI executable.
-        '''
-        return self.cacti_exe
+class InvokeCACTIP(Invoke):
+    '''
+    Environment class to invoke CACTI-P.
+    '''
 
+    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_exe=None):
+        super(InvokeCACTIP, self).__init__(output_dir, cfg_dir=cfg_dir,
+                                           log_dir=log_dir, cacti_exe=cacti_exe)
+        self.result_parser = result_parser.ResultParserCACTIP()
 
-    def get_output_dir(self):
-        '''
-        Output directory.
-        '''
-        return self.output_dir
+    def _make_config(self, **kwargs):
+        param_dict = OrderedDict()
+        try:
+            param_dict['SIZE'] = kwargs.pop('size')
+            param_dict['WAYS'] = kwargs.pop('assoc')
+            param_dict['LINE'] = kwargs.pop('line')
+            param_dict['BANKS'] = kwargs.pop('banks', 1)
+            param_dict['TECHNODE'] = kwargs.pop('tech', 0.032)
+            param_dict['TEMP'] = kwargs.pop('temp', 350)
+            param_dict['LEVEL'] = kwargs.pop('level', 'L1')
+            param_dict['TYPE'] = kwargs.pop('memtype', 'cache')
+            param_dict['RWPORT'] = kwargs.pop('rwports', 0)
+            param_dict['RDPORT'] = kwargs.pop('rdports', 1)
+            param_dict['WRPORT'] = kwargs.pop('wrports', 1)
+            param_dict['DARRAY_CELL_TYPE'] = kwargs.pop('dcell', 'hp')
+            param_dict['DARRAY_PERI_TYPE'] = kwargs.pop('dperi', 'hp')
+            param_dict['TARRAY_CELL_TYPE'] = kwargs.pop('tcell', 'hp')
+            param_dict['TARRAY_PERI_TYPE'] = kwargs.pop('tperi', 'hp')
+        except KeyError as e:
+            raise TypeError('{}: must provide argument {}.'
+                            .format(self.__class__.__name__, str(e)))
+        if len(kwargs) > 0:
+            raise TypeError('{}: invalid argument(s) {}'
+                            .format(self.__class__.__name__, str(kwargs.keys())))
+
+        return config.ConfigCACTIP(param_dict)
 
