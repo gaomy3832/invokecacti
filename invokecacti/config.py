@@ -42,8 +42,34 @@ class Config(object):
         '''
         Return all configuration key names as a list.
         '''
-        raise NotImplementedError('{}: version_name() not implemented.'
+        raise NotImplementedError('{}: config_keys() not implemented.'
                                   .format(self.__class__.__name__))
+
+    def config_name(self):
+        '''
+        Return a name for this configuration.
+        '''
+        raise NotImplementedError('{}: config_name() not implemented.'
+                                  .format(self.__class__.__name__))
+
+    def config_dict(self):
+        '''
+        Return the configuration dict.
+        '''
+        return self.param_dict
+
+    def _format_array_type(self, array_type):
+        if array_type == 'itrs-hp' or array_type == 'itrs-lstp' \
+                or array_type == 'itrs-lop' or array_type == 'lp-dram' \
+                or array_type == 'comm-dram':
+            return array_type
+        elif array_type == 'hp' or array_type == 'lstp' or array_type == 'lop':
+            return 'itrs-' + array_type
+        elif array_type == 'dram':
+            return 'comm-dram'
+        else:
+            raise ValueError('{}: invalid array type {}.'
+                             .format(self.__class__.__name__, array_type))
 
     def generate(self, filename=None):
         '''
@@ -79,12 +105,7 @@ class Config(object):
 
         for key in ['DARRAY_CELL_TYPE', 'DARRAY_PERI_TYPE',
                     'TARRAY_CELL_TYPE', 'TARRAY_PERI_TYPE']:
-            array_type = self.param_dict[key]
-            if array_type != 'itrs-hp' and array_type != 'itrs-lstp' \
-                    and array_type != 'itrs-lop' and array_type != 'lp-dram' \
-                    and array_type != 'comm-dram':
-                raise ValueError('{}: {} has invalid value {}.'
-                                 .format(self.__class__.__name__, key, array_type))
+            self.param_dict[key] = self._format_array_type(self.param_dict[key])
 
         # fill template.
 
@@ -110,4 +131,13 @@ class ConfigCACTIP(Config):
         return self.base_config_keys \
             + ['WAYS', 'LEVEL', 'RWPORT', 'RDPORT', 'WRPORT', 'IOWIDTH']
 
+    def config_name(self):
+        list_ = []
+        for key in ['SIZE', 'WAYS', 'LINE', 'BANKS', 'TECHNODE', 'TEMP',
+                    'LEVEL', 'TYPE', 'RWPORT', 'RDPORT', 'WRPORT',
+                    'DARRAY_CELL_TYPE', 'DARRAY_PERI_TYPE',
+                    'TARRAY_CELL_TYPE', 'TARRAY_PERI_TYPE']:
+            list_.append(str(self.param_dict[key]))
+        return 's{}_w{}_l{}_b{}_t{}_{}k_{}_{}_rw{}_rd{}_wr{}_{}_{}_{}_{}'\
+                .format(*list_)
 
