@@ -11,7 +11,7 @@ import invokecacti
 
 cacti_exe='/armadillo/users/mgao12/research/tools/mcpat/mcpat/cacti/cacti'
 
-cacti = invokecacti.Invoke('output',
+cacti = invokecacti.InvokeCACTIP('output',
         cfg_dir='output/cfgs', log_dir='output/logs', cacti_exe=cacti_exe)
 
 cfgs = OrderedDict()
@@ -22,7 +22,8 @@ for size in [ 2**i for i in range(15, 24+1) ]:
     else:
         cell_array_type='hp'
 
-    cfgs[size] = cacti.invoke(size, 8, 64, tech=0.045, memtype='cache',
+    cfgs[size] = cacti.invoke(size=size, assoc=8, line=64,
+            tech=0.045, memtype='cache',
             dcell=cell_array_type, tcell=cell_array_type)
 
 
