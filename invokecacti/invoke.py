@@ -13,7 +13,7 @@ import errno
 from collections import OrderedDict
 
 from .config import ConfigCACTIP
-from . import result_parser
+from .result_parser import ResultParserCACTIP
 
 
 # http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -155,7 +155,7 @@ class Invoke(object):
                 fh.write(outstr)
 
         # parse output.
-        results = result_parser.parse(outstr)
+        results = ResultParserCACTIP().parse(outstr)
         # update() loses order.
         for key, val in results.items():
             cfg_dict[key] = val
