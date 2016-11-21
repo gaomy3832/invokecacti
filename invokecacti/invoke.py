@@ -124,9 +124,9 @@ class Invoke(object):
         # compose return dict.
         # update() loses order.
         for key, val in cfg.config_dict().items():
-            return_dict[key] = val
+            return_dict[key.lower()] = val
         for key, val in results.items():
-            return_dict[key] = val
+            return_dict[key.lower()] = val
 
         # write output json file.
         _mkdir_p(self.output_dir)
