@@ -33,12 +33,14 @@ class ResultPattern(object):
             raise ValueError('{}: pattern is invalid regex pattern; '
                              'at least one group must be given.'
                              .format(self.__class__.__name__))
-        if len(self.keys) != self.regex.groups:
-            raise ValueError('{}: keys have unmatched length with pattern.'
+        if len(self.keys) != len(self.funcs):
+            raise ValueError('{}: keys have unmatched length with functions.'
                              .format(self.__class__.__name__))
-        if len(self.funcs) != self.regex.groups:
-            raise ValueError('{}: keys have unmatched length with pattern.'
-                             .format(self.__class__.__name__))
+
+        if len(self.keys) != self.regex.groups and len(self.keys) != 1:
+            raise ValueError('{}: pattern should either have the matching '
+                             'length with keys, or be reduced to a single '
+                             'key.'.format(self.__class__.__name__))
 
     def result_keys(self):
         '''
@@ -57,7 +59,11 @@ class ResultPattern(object):
         match = matches[0]
         if not isinstance(match, tuple):
             match = (match,)
-        values = [f(v) for f, v in zip(self.funcs, match)]
+        if len(self.funcs) == len(match):
+            values = [f(v) for f, v in zip(self.funcs, match)]
+        else:
+            values = [self.funcs[0](*match)]
+        assert len(values) == len(self.keys)
         return OrderedDict(zip(self.keys, values))
 
 
