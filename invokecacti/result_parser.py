@@ -115,10 +115,13 @@ class ResultParserCACTIP(ResultParser):
                           r'({})'.format(FLOAT_REGEX),
                           'ewrite',
                           ResultParser._nano),
-            ResultPattern(r'Total leakage power of a bank .* \(mW\)\s*:\s*({})'
-                          r'\s*Cache'.format(FLOAT_REGEX),
+            ResultPattern(r'(?ms)'
+                          r'Number of banks\s*:\s*({})\s*'
+                          r'.*'
+                          r'Total leakage power of a bank .* \(mW\)\s*:\s*({})'
+                          r'\s*Cache'.format(INT_REGEX, FLOAT_REGEX),
                           'leakage',
-                          ResultParser._milli),
+                          lambda x, y: int(x) * ResultParser._milli(y)),
             ResultPattern(r'Cache height x width \(mm\)\s*:\s*({0})\s*x\s*{0}'
                           .format(FLOAT_REGEX),
                           'height',
