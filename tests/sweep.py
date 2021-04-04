@@ -9,7 +9,7 @@ import json
 
 import invokecacti
 
-cacti = invokecacti.InvokeCACTIP('output',
+cacti = invokecacti.InvokeCACTI('output',
         cfg_dir='output/cfgs', log_dir='output/logs')
 
 cfgs = OrderedDict()

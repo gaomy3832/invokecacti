@@ -6,7 +6,7 @@
 
 import invokecacti
 
-cacti = invokecacti.InvokeCACTIP('.')
+cacti = invokecacti.InvokeCACTI('.')
 
 cacti.invoke(size=65536, assoc=4, line=64)
 

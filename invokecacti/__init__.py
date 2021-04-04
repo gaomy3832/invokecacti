@@ -8,5 +8,7 @@ from .config import ConfigCACTIP, ConfigCACTI7
 from .result_parser import ResultParserCACTIP, ResultParserCACTI7
 from .invoke import InvokeCACTIP, InvokeCACTI7
 
+InvokeCACTI = InvokeCACTI7
+
 __version__ = '0.2.1'
 
