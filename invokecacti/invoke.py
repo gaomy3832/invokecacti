@@ -192,3 +192,16 @@ class InvokeCACTIP(Invoke):
         self.cfg_cls = config.ConfigCACTIP
         self.res_cls = result_parser.ResultParserCACTIP
 
+
+class InvokeCACTI7(Invoke):
+    '''
+    Environment class to invoke CACTI-7.
+    '''
+
+    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_path=None):
+        super().__init__(output_dir, cfg_dir=cfg_dir,
+                         log_dir=log_dir, cacti_path=cacti_path)
+
+        self.cfg_cls = config.ConfigCACTI7
+        self.res_cls = result_parser.ResultParserCACTI7
+

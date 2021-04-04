@@ -144,3 +144,12 @@ class ResultParserCACTIP(ResultParser):
                           lambda x: np.prod([ResultParser._milli(xx)
                                              for xx in x.split('x')]))]
 
+
+class ResultParserCACTI7(ResultParserCACTIP):
+    ''' CACTI-7 output parser. '''
+
+    # Based on CACTI-P.
+
+    def version_name(self):
+        return 'CACTI-7'
+

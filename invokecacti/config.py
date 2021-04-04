@@ -138,3 +138,12 @@ class ConfigCACTIP(Config):
         return 's{}_w{}_l{}_b{}_t{}_{}k_{}_{}_rw{}_rd{}_wr{}_{}_{}_{}_{}'\
                 .format(*list_)
 
+
+class ConfigCACTI7(ConfigCACTIP):
+    ''' CACTI-7 configuration. '''
+
+    # Based on CACTI-P.
+
+    def version_name(self):
+        return 'CACTI-7'
+

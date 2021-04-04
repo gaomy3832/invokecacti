@@ -4,9 +4,9 @@
  *
 """
 
-from .config import ConfigCACTIP
-from .result_parser import ResultParserCACTIP
-from .invoke import InvokeCACTIP
+from .config import ConfigCACTIP, ConfigCACTI7
+from .result_parser import ResultParserCACTIP, ResultParserCACTI7
+from .invoke import InvokeCACTIP, InvokeCACTI7
 
 __version__ = '0.2.1'
 
