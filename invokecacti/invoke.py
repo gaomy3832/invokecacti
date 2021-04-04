@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 from collections import OrderedDict
-from tempfile import NamedTemporaryFile, gettempdir
+from tempfile import NamedTemporaryFile
 
 from . import config
 from . import result_parser
@@ -31,28 +31,28 @@ class Invoke():
     Environment class to invoke CACTI.
     '''
 
-    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_exe=None):
+    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_path=None):
         '''
         `output_dir` stores the json files for the results.
 
         `cfg_dir` stores the CACTI input cfg files; `log_dir` stores the CACTI
         output log files.
 
-        `cacti_exe` specifies the CACTI executable path. If missing, infer from
+        `cacti_path` specifies the CACTI directory path. If missing, infer from
         env var `CACTIPATH`.
         '''
 
-        if cacti_exe is None:
-            cactipath = os.environ.get('CACTIPATH', None)
-            if not cactipath:
-                raise EnvironmentError('{}: CACTI exe is not provided and '
+        if cacti_path is None:
+            cacti_path = os.environ.get('CACTIPATH', None)
+            if not cacti_path:
+                raise EnvironmentError('{}: CACTI path is not provided and '
                                        'cannot find env var CACTIPATH.'
                                        .format(self.__class__.__name__))
-            cacti_exe = os.path.join(cactipath, 'cacti')
-
+        cacti_exe = os.path.join(cacti_path, 'cacti')
         if not os.path.isfile(cacti_exe) or not os.access(cacti_exe, os.X_OK):
             raise ValueError('{}: CACTI exe {} is invalid.'
                              .format(self.__class__.__name__, cacti_exe))
+        self.cacti_path = os.path.abspath(cacti_path)
         self.cacti_exe = os.path.abspath(cacti_exe)
 
         self.output_dir = os.path.abspath(output_dir)
@@ -144,7 +144,7 @@ class Invoke():
             with open(os.devnull, 'w') as fnull:
                 outstr = subprocess.check_output(
                     [self.cacti_exe, '-infile', cfg_fname],
-                    stderr=fnull, cwd=gettempdir(), universal_newlines=True)
+                    stderr=fnull, cwd=self.cacti_path, universal_newlines=True)
         except subprocess.CalledProcessError as e:
             raise RuntimeError('{}: CACTI exits with {}'
                                .format(self.__class__.__name__, e.returncode)) from e
@@ -185,9 +185,9 @@ class InvokeCACTIP(Invoke):
     Environment class to invoke CACTI-P.
     '''
 
-    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_exe=None):
+    def __init__(self, output_dir, cfg_dir=None, log_dir=None, cacti_path=None):
         super().__init__(output_dir, cfg_dir=cfg_dir,
-                         log_dir=log_dir, cacti_exe=cacti_exe)
+                         log_dir=log_dir, cacti_path=cacti_path)
 
         self.cfg_cls = config.ConfigCACTIP
         self.res_cls = result_parser.ResultParserCACTIP

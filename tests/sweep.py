@@ -9,10 +9,8 @@ import json
 
 import invokecacti
 
-cacti_exe='/armadillo/users/mgao12/research/tools/mcpat/mcpat/cacti/cacti'
-
 cacti = invokecacti.InvokeCACTIP('output',
-        cfg_dir='output/cfgs', log_dir='output/logs', cacti_exe=cacti_exe)
+        cfg_dir='output/cfgs', log_dir='output/logs')
 
 cfgs = OrderedDict()
 
