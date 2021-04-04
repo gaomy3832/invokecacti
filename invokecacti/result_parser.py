@@ -5,8 +5,8 @@
 """
 
 import re
-import numpy as np
 from collections import OrderedDict
+import numpy as np
 
 
 # http://stackoverflow.com/a/385597
@@ -15,7 +15,7 @@ FLOAT_REGEX = r'[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?'
 INT_REGEX = r'[+-]? *\d+'
 
 
-class ResultPattern(object):
+class ResultPattern():
     ''' Pattern of a result that needs to be extracted. '''
 
     def __init__(self, pattern, keys, funcs):
@@ -67,11 +67,12 @@ class ResultPattern(object):
         return OrderedDict(zip(self.keys, values))
 
 
-class ResultParser(object):
+class ResultParser():
     ''' CACTI output parser. '''
 
     def __init__(self):
         self.result_patterns = []
+        self._add_patterns()
 
     def version_name(self):
         '''
@@ -89,6 +90,11 @@ class ResultParser(object):
             results.update(rp.extract(string))
         return results
 
+    def _add_patterns(self):
+        '''
+        Add patterns to be parsed.
+        '''
+
     @staticmethod
     def _milli(val):
         return float(val) * 1e-3
@@ -101,8 +107,10 @@ class ResultParser(object):
 class ResultParserCACTIP(ResultParser):
     ''' CACTI-P output parser. '''
 
-    def __init__(self):
-        super(ResultParserCACTIP, self).__init__()
+    def version_name(self):
+        return 'CACTI-P'
+
+    def _add_patterns(self):
         self.result_patterns += [
             ResultPattern(r'Access time \(ns\)\s*:\s*({})'.format(FLOAT_REGEX),
                           'latency',
@@ -135,7 +143,4 @@ class ResultParserCACTIP(ResultParser):
                           'area',
                           lambda x: np.prod([ResultParser._milli(xx)
                                              for xx in x.split('x')]))]
-
-    def version_name(self):
-        return 'CACTI-P'
 

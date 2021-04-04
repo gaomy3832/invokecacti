@@ -12,7 +12,7 @@ _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _CFG_TMPL_DIR = os.path.join(_THIS_DIR, 'cfg_templates')
 
 
-class Config(object):
+class Config():
     ''' CACTI configuration. '''
 
     base_config_keys = [
@@ -59,17 +59,14 @@ class Config(object):
         return self.param_dict
 
     def _format_array_type(self, array_type):
-        if array_type == 'itrs-hp' or array_type == 'itrs-lstp' \
-                or array_type == 'itrs-lop' or array_type == 'lp-dram' \
-                or array_type == 'comm-dram':
+        if array_type in ('itrs-hp', 'itrs-lstp', 'itrs-lop', 'lp-dram', 'comm-dram'):
             return array_type
-        elif array_type == 'hp' or array_type == 'lstp' or array_type == 'lop':
+        if array_type in ('hp', 'lstp', 'lop'):
             return 'itrs-' + array_type
-        elif array_type == 'dram':
+        if array_type == 'dram':
             return 'comm-dram'
-        else:
-            raise ValueError('{}: invalid array type {}.'
-                             .format(self.__class__.__name__, array_type))
+        raise ValueError('{}: invalid array type {}.'
+                         .format(self.__class__.__name__, array_type))
 
     def generate(self, filename=None):
         '''
@@ -98,8 +95,7 @@ class Config(object):
                                .format(self.__class__.__name__, key))
 
         type_ = self.param_dict['TYPE']
-        if type_ != 'cache' and type_ != 'ram' and type_ != 'cam' \
-                and type_ != 'main memory':
+        if type_ not in ('cache', 'ram', 'cam', 'main memory'):
             raise ValueError('{}: TYPE has invalid value {}.'
                              .format(self.__class__.__name__, type_))
 
@@ -122,7 +118,7 @@ class ConfigCACTIP(Config):
     ''' CACTI-P configuration. '''
 
     def __init__(self, param_dict):
-        super(ConfigCACTIP, self).__init__(param_dict)
+        super().__init__(param_dict)
         self.param_dict['IOWIDTH'] = 8 * self.param_dict['LINE']
 
     def version_name(self):
