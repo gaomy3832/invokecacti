@@ -103,6 +103,9 @@ class Invoke():
 
         return_dict = OrderedDict()
 
+        # retrieve ouput json file name.
+        name = kwargs.pop('name', None)
+
         # create config.
         param_dict = OrderedDict()
         try:
@@ -124,7 +127,8 @@ class Invoke():
             raise TypeError('{}: invalid argument(s) {}'
                             .format(self.__class__.__name__, str(kwargs.keys())))
         cfg = self.cfg_cls(param_dict)
-        name = cfg.config_name()
+        if not name:
+            name = cfg.config_name()
 
         # write cfg file.
         if not isinstance(cfg, config.Config):
